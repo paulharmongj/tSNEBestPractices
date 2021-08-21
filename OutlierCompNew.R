@@ -1,30 +1,8 @@
-## Script to functionalize this process
+## Draft version of outlier comparison function agnostic to mapping technique
 
-
-# preliminary functions: 
-
-## Vectorize Dist: Function that takes a dataframe and returns a vectorized version of a distance matrix applied to that data matrix. 
-## This function is used for generating vectorized data when we step through the Mantel test. 
-
-vectorize_dist <- function(df) {
-  tmp <- dist(df)
-  vec <- c(tmp)
-  return(vec)}
-
-## Pull P-Val and Pull F stat return the p-values and f-statstics from the list of output MultiPermanova puts out. 
-
-pullPval <- function(x){temp <- x$aov.tab$`Pr(>F`[1]; return(temp)}
-
-pullFstat <- function(x){temp <- x$aov.tab$`F.Model`[1]; return(temp)}
-
-
-
-### Dependent Functions
 
 #generate maps on holdout data (jth iteration is held out)
 # this function should be able to operate on multiple mapping techniques or a single one 
-
-## MultiPermanova: Function that takes an ordination method: Either t-SNE or MDS and produces a 
 
 Generate_Holdout_Maps <- function(data, j, maptype = "MDS",...){  
   
@@ -53,24 +31,8 @@ Generate_Holdout_Maps <- function(data, j, maptype = "MDS",...){
 
 
 
-## Generates the Permanova test 
-# 1: listobject: list of maps (maplist, cmdlist) to evaluate
-# 2: nperms - should inherit from above
-# 3: j: index to be looped through 
-# HDpermanova <- function(listobject, nperms, j){
-#   #generate the indicator variable for each feature
-#   indicator_df <- rep(0, nrow(listobject[[1]])) %>% as.data.frame()
-#   
-#   names(indicator_df) <- "Indicator"
-#   indicator_df$Indicator[j] = 1
-#   
-#   #each item in the list is an Adonis test using the indicator for the holdout variable
-#   #note that this is set to do parallel processing with 2 cores
-#   model_output <- adonis(cordist ~ Indicator, data = indicator_df, permutations = nperms, parallel = 2)
-#   
-#   return(list(out = model_output)) 
-# }
 
+#mapping method supported
 
 MultiPermanova <- function(data, nperms = 5000, perplexity = 10, pca_options = FALSE, maptype = "MDS"){
   
@@ -120,9 +82,9 @@ MultiPermanova <- function(data, nperms = 5000, perplexity = 10, pca_options = F
   
   ##generate distance on correlation matrix
   cordist <- sqrt(2*(1-cormat)) %>% as.dist()
-  
+
   model_list <- list()
-  
+
   
   #Step through the permanova method: 
   
@@ -142,7 +104,7 @@ MultiPermanova <- function(data, nperms = 5000, perplexity = 10, pca_options = F
     for(i in 2:nrow(permat1)){
       permat1[i,] <- c(i:length(indicator_df$Indicator), 1:(i-1))
     }
-    
+  
     
     #each item in the list is an Adonis test using the indicator for the holdout variable
     model_list[[j]] <- adonis(cordist ~ Indicator, data = indicator_df, permutations = permat1, parallel = 2)
@@ -156,6 +118,16 @@ MultiPermanova <- function(data, nperms = 5000, perplexity = 10, pca_options = F
 }
 
 
+#quick testing
+tic = Sys.time()
+x3 = MultiPermanova(yes_structure_final[,1:10], maptype = "MDS")
+toc = Sys.time()
 
+tic - toc
 
+tic = Sys.time()
+x4 = MultiPermanova(yes_structure_final[,1:10], maptype = "tSNE", perplexity = 20)
+toc = Sys.time()
+
+#both functions take about 2.5 minutes
 

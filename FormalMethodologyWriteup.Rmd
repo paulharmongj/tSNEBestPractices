@@ -25,6 +25,8 @@ library(R.utils)
 library(vegan)
 library(mnormt)
 
+
+
 Generate_Holdout_Maps <- function(data, j, ...){  
   
   #hold out a single row of the data (in the jth row)
@@ -45,7 +47,8 @@ Generate_Holdout_Maps <- function(data, j, ...){
   return(list(mds = mds1, tsne = x$Y))
 }
 
-perplexity = 10
+
+
 
 ```
 
