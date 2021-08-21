@@ -1,0 +1,54 @@
+---
+title: "TSNE Introduction"
+author: "Paul Harmon"
+date: "6/26/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(Rtsne)
+```
+
+# Introduction
+
+This chapter should act as a pseudo-paper that breaks out the derviation and mathematical details of t-SNE in detail. Additionally, should overview the pros and cons of the method and discuss how it should be used. 
+
+This will act as an addendum to my introduction section but should also be submittable as a stand-alone paper. 
+
+
+## How is t-SNE used
+
+## Comparison methods
+
+### SNE
+### MDS/Sammon Mapping
+### Umap
+
+
+
+# t-SNE Algorithm and Math
+
+## Derivation
+
+## Mathematical Details
+
+## PCA as Initial Step
+
+## Considerations
+
+
+# Perplexity
+
+## Cost Decreases as Function of Perplexity
+
+## Perplexity 
+
+
+
+
+
+
+
+
+
