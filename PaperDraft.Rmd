@@ -1,0 +1,64 @@
+---
+title: "Formal Paper Draft"
+subtitle: "Influence Diagnostics for High-Dimensional Ordination Techniques"
+author: "Paul Harmon"
+date: "8/21/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("OutlierCompFunctions.R")
+library(ggplot2)
+library(readr)
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(janitor)
+library(magrittr)
+library(knitr)
+library(Rtsne)
+library(robustHD)
+library(GGally)
+library(stringr)
+library(plotly)
+library(R.utils)
+library(vegan)
+library(mnormt)
+```
+
+
+
+ 
+
+# Introduction
+
+Consider the problem of visualizing multivariate (or potentially high-dimensional) data.  In many cases, it is necessary to generate a 2 or 3-D mapping of some higher-dimensional space, projecting the high-dimensional data into an ordination that can be printed on paper. There are many methods that exist to accomplish this task, ranging from tools such as classicial multidimensional scaling (MDS) to more modern tools like t-distributed Stochastic Neighbor Embedding. 
+
+Unlike regression or classification, most tools for dimension reduction and higher-dimensional data visualization are unsupervised, meaning that they do not take advantage of some marked response variable; rather, they capitalize on the signal present in a set of features and produce a data-driven result.  
+
+Despite those differences, tools like t-SNE and MDS are succeptible to abberant data values, much in the same way that a regression model might be succeptible to outliers and influential points.  In a regression model, the estimated coefficients or predictions might be affected in meaningful fashion by the inclusion or exclusion of a single point - such points are referred to as influential (Cook, 1977).  A suite of tools have been developed to identify and measure the impact of influential points on the results of regression models.
+
+
+# High-dimensional Data Visualization
+## What is t-SNE
+## Problems with using t-SNE
+## Whitening/Pre-PCA
+
+# Other Multivariate Dimension-Reduction Tools
+## MDS
+## Sammon Mapping
+## UMAP
+
+# Defining “Influence” in High Dimensional Maps
+## Influence in Regression - Cook’s Distance
+## Influence in 
+
+
+# Methods
+## Sparse t-SNE
+## Cross Validation and Mantel-esque Test
+
+
+
+

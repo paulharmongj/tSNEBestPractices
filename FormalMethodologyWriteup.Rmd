@@ -48,8 +48,6 @@ Generate_Holdout_Maps <- function(data, j, ...){
 }
 
 
-
-
 ```
 
 
