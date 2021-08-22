@@ -30,8 +30,7 @@ $$C = \sum_{i} \sum_{j} p_{j|i} log(\frac{p_{j|i}}{q_{j|i}})$$
 t-SNE is an improvement over Stochastic Neightbor Embedding (SNE), which makes use of Gaussian distributions to model both $p$ and $q$ make preserving local structure somewhat difficult. Most of the minimization of objective functions is done via gradient descent (and some methods require simulated annealing because the algorithm can get caught in local optima). Critically, because the optimization is non-convex, and as a consequence of the gradient descent methods used to optimize it, t-SNE has the potential to provide different maps when run on the same data at the same perplexity. 
 
 
-
-## Comparison methods
+## Other Ordination Methods
 
 ### SNE
 ### MDS/Sammon Mapping
