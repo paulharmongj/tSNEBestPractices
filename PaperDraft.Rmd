@@ -157,6 +157,14 @@ To test the method
 
 The Palmer Penguin dataset (Horst et al., 2020) contains information pertaining to three different species of penguins.  The dataset is intended to be an alternative to the ever-popular iris dataset (cite) as each of the penguins form relatively distinct clusters when measured on a series of biometric markers.  
 
+Overview of Penguin data. 
+
+Additionally, we simulated an additional penguin that stands out significantly from the additional penguins. The penguin is 5 standard deviations above or below the average for each of the measurements. 
+
+
+
+
+
 
 
 ## Carnegie Classification
@@ -168,6 +176,17 @@ The Carnegie Classification is typically based on a scaled version of the data d
 For this analysis, we instead look at scaled versions of the unranked data in part to assess whether or not some of the relative extreme points appear as influential relative to other universities in the group. 
 
 
+```{r}
+CC2015 <- read.csv("https://raw.githubusercontent.com/paulharmongj/Carnegie_SEM/master/data/CC2015data.csv")
+
+CC2015_filter <- CC2015 %>% filter(BASIC2015 %in% c(15,16,17)) %>% select(PDNFRSTAFF, S.ER.D, NONS.ER.D, FACNUM, HUM_RSD, STEM_RSD, OTHER_RSD, SOCSC_RSD)
+perplexity = 30
+
+## NEED TO STANDARDIZE THE DATA FIRST (MAKE UNITLESS)
+CCscale <- CC2015_filter %>% lapply(scale) %>% as_tibble()
+
+out <- MultiPermanova(CCscale, maptype = "MDS")
+```
 
 
 
