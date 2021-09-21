@@ -10,7 +10,7 @@ subtitle: Influence Diagnostics for High-Dimensional Ordination Techniques
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-source("OutlierCompFunctions.R")
+source("OutlierCompNew.R")
 library(ggplot2)
 library(readr)
 library(tibble)
@@ -75,6 +75,7 @@ Depending on the size of the initial dimensionality of the data, this step may d
 Classical multidimensional scaling (MDS) is closely related to PCA (an in some cases, equivalent) (Gower, 1966).  MDS takes as input a distance or dissimilarity matrix representing the distance between pairs of observations - this distance need not simply be Euclidean. Classical multidimensional scaling returns maps in teh same metric as the original distance or dissimilarity matrix. 
 
 ## Sparse t-SNE
+
 ## Cross Validation and Mantel-esque Test
 
 # Defining “Influence” in High Dimensional Maps
@@ -83,7 +84,7 @@ Classical multidimensional scaling (MDS) is closely related to PCA (an in some c
 
 In regression models, an outlier is typically denoted as a point that is either much larger or smaller than similar observations on a specific scale. However, an outlier need not be an influential point. An influential point simply needs to be outlying enough relative to similar observations that it impacts the fit of the regression line. the identification of influential points that can impact the results of a model is commonplace.  
 
-Cook (1977) proposed a measure of influence called "Cook's Distance" that has since become one of the most common tools for diagnosing influential points and outliers. The idea is predicated on the concept that by leaving an out an influential observation, the results of the model should change. This process of jacknifing observations is done for all the observations in the data. 
+Cook (1977) proposed a measure of influence called "Cook's Distance" that has since become one of the most common tools for diagnosing influential points and outliers. The idea is predicated on the concept that by leaving an out an influential observation, the results of the model should change. This process of jackknifing observations is done for all the observations in the data. 
 
 Cook's distance is defined as follows for the $ith$ observation, with$\hat{j}_{j}$ the fitted response value for the model withthe $ith$ observation omitted, $s^2$ defined as the mean-squared error for the model and $p$ the number of variables for each observation: 
 $$ D_i = \frac{\sum_{j=1}^{n} (\hat{y_j} - \hat{y}_{j(i)})^2}{ps^2}$$ 
@@ -91,7 +92,7 @@ $$ D_i = \frac{\sum_{j=1}^{n} (\hat{y_j} - \hat{y}_{j(i)})^2}{ps^2}$$
 Although Cook's distance is essentially an F statistic from an $F_{p, n-p}$ distribution, and the method does not use p-values to determine how "influential" a point is. Rather, cutoff values are typically assessed, or observations with relatively large Cook's distance values are considered for investigation of influence. 
 
 
-```{r}
+```{r, eval = FALSE}
 #image of an influential point
 x = rnorm(100, 10, 3)
 y = 3 + 2*x + rnorm(100, 0, 1)
@@ -121,33 +122,55 @@ Two other papers, including Forrero and Giannakis (2012) as well as Kong et al. 
 
 
 
-
-
 # Method Overview
 
 We instead propose a method for identifying influential observations that is agnostic to the mapping method.  In addition, our method follows a philosophical framework similar in flavor to Cook's distance for mapping methods; however, it relies on a different set of tools than its regression analogue. 
 
-
 Similar to Cook's Distance, we propose calculating hold-out maps, with each of the 1...n observations held out singly.  Rather than basing the test on a standard F distribution, as is Cook's distance, our method utilizes permutation-based MANOVA (Permanova) tests to calculate pseudo-F test statistics.  Our method borrows from some of the machinery of the mantel test (Mantel, 1967), which is a method for comparing correlation between two matrices. 
 
-The proposed approach is as follows: 
+In general, we seek to identify either **multivariate outliers** (or groups of them) which, for some reason, cause large differences in the shape of the resulting ordination. The methods rely on a few different ideas.  First, PERMANOVA (Anderson, 2001) is a non-parametric, multivariate version of Analysis of Variance (ANOVA) that relies on a pseduo-F test to compare within-group and between group similarities based on a specified distance (dissimilarity) measure. Unlike ANOVA, PERMANOVA makes use of permutation tests to draw inferences without assuming distributions of test statistics. 
 
-1. For each observation in the dataset, remove it, and generate a t-SNE map in 2 dimensions from the resulting (n-1) observations.  (For accounting purposes, it may make sense to keep the nx1 structure but replace the holdout observation with NA). 
+Second, distance matrices contain information on point-to-point distances (or dissimilarities) and, when vectorized, the correlation of the distance matrices measures similarity of two configurations (Mantel's test (Mantel, 1967) makes use of this approach to assess correlation between distance matrices). 
+
+Third, correlations (or similarities) can be converted to distances; one such metric for doing this is $\sqrt{2(1-r_{ij})}$ (James et al, 2013). 
+
+Finally, correlations can be computed using pairwise complete observations to leverage all available information to estimate correlations in the presence of some missing data values. 
+
+
+Our Permanova-based approach is as follows: 
+
+1. For each observation in the dataset, remove it, and generate a map in 2 dimensions from the resulting (n-1) observations for a selected ordination method.  (For accounting purposes, it may make sense to keep the nx1 structure but replace the holdout observation with NA). 
 2. Generate a distance matrix of the nx1 by 2 matrix. Do this for each of the held-out observations. 
 3. Generate a pairwise-complete correlation matrix from the combination of these vectorized distances that measures similarity of distances (where available).
-4. Convert that correlation matrix (of all the hold-out vectorized distance matrices) into a distance matrix using a $1-\|\sqrt{stuff}$. 
+4. Convert that correlation matrix (of all the hold-out vectorized distance matrices) into a distance matrix using a $$\sqrt{2(1-r_{ij})}$$ (James et al, 2013). 
 5. Apply non-parametric PERMANOVA tests for each holdout observation - this means that on a 100-observation dataset, you apply 100 individual tests where each test uses an independent variable that is equal to 1 for the index of the holdout observation and 0 elsewhere. The hypotheses are specified as such: 
 
 + $H_0$: No differences in map with observation j removed vs. those without j removed 
 + $H_a$: Some difference in map with observation j removed
 
-We will discuss correcting p-values for multiple testing later, although currently our plan is to assess using Benjamini-Hochberg False Discovery Rate or Bonferroni corrections (or something similar). We would expect that if the maps are suitably distorted, or *influenced* by a single point, the resulting p-value for the jth adonis test would be small. 
+We will discuss correcting p-values for multiple testing later, although currently our plan is to assess using Benjamini-Hochberg False Discovery Rate or Bonferroni corrections (or something similar, assuming that the results are based on p-values as in the Bonferroni Outlier test (Cook & Weisberg, 1982)). We would expect that if the maps are suitably distorted, or *influenced* by a single point, the resulting p-value for the jth adonis test would be small. 
+
 
 
 
 # Simulation
 
-To test the method 
+We conducted a series of simulations to assess the efficacy of the method at identifying influential points in various different situations. In all cases, we simulated data from multivariate normal distributions.  Additionally, we did not use any of the data pre-processing available in any t-SNE maps; no PCA was used to pick an initial set of dimensions to reduce. 
+
+In the simulation, each iteration simulates a new (contaminated) dataset, runs the t-SNE and MDS mapping procedure, and tests the consistency of the configurations for each of the *n* holdout points. Several versions of the simulations were assessed, including 1) 1 group with 3 "influental" points, 2) simulation with 3 groups with 3 "influential" points with different variances, and 3) simulation with 3 groups with 3 influential points with same variances. 
+
+
+
+## Perplexity
+
+We also assessed the sensitivity of t-SNE's ability to identify influential points at various different levels of perplexity. 
+
+## Sample Size and Dimensionality
+
+Two factors have the potential to greatly impact the computational complexity of generating maps: the dimensionality of the dataset and the sample size considered. For each of the mapping techniques examined, we assessed the 
+
+
+The PERMANOVA step in the method can use either a pre-specified number of permutations, or it can be based on a permutation matrix that includes each of the permuted indices as rows.  In small sample size situations, we utilize an exact p-value that is calculated using all of the possible permutations of the indicator variable as the explanatory variable consists only of a single 1 and the rest 0's.  Thus, there are only $n$ distinct permutations to explore.  In larger sample size scenarios, it may not be computationally feasible to consider every possible permutation of the indicator; instead, a raw number of permutations can be calculated and an estimated p-value can be calculated. 
 
 
 

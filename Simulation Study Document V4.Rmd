@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 
-source("OutlierCompFunctions.R")
+source("OutlierCompNew.R")
 library(ggplot2)
 library(readr)
 library(tibble)

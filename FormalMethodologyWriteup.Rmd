@@ -55,18 +55,18 @@ Generate_Holdout_Maps <- function(data, j, ...){
 
 # Introduction
 
-Consider the problem of visualizing multivariate (or potentially high-dimensional) data.  In many cases, it is necessary to generate a 2 or 3-D mapping of some higher-dimensional space, projecting the high-dimensional data into an ordination that can be printed on paper. There are many methods that exist to accomplish this task, ranging from tools such as classicial multidimensional scaling (MDS) to more modern tools like t-distributed Stochastic Neighbor Embedding. 
+Consider the problem of visualizing multivariate data (or potentially multivariate in many or high-dimensions).  In many cases, it is useful to generate a 2 or 3-D mapping of some higher-dimensional space, projecting the high-dimensional data into an ordination that can be directly visualized. There are many methods that exist to accomplish this task, ranging from tools such as classicial multidimensional scaling (MDS) to more modern tools like t-distributed Stochastic Neighbor Embedding. 
 
-Unlike regression or classification, most tools for dimension reduction and higher-dimensional data visualization are unsupervised, meaning that they do not take advantage of some marked response variable; rather, they capitalize on the signal present in a set of features and produce a data-driven result.  
+Unlike regression or classification, most tools for dimension reduction and higher-dimensional data visualization are unsupervised, meaning that they do not take advantage of some marked response variable; rather, they capitalize on the signal present in a set of features and produce a data-driven result.  In regression models, we have a suite of tools to measure and assess unusual observations related to response vs. model predictions. 
 
-Despite those differences, tools like t-SNE and MDS are succeptible to abberant data values, much in the same way that a regression model might be succeptible to outliers and influential points.  In a regression model, the estimated coefficients or predictions might be affected in meaningful fashion by the inclusion or exclusion of a single point - such points are referred to as influential (Cook, 1977).  A suite of tools have been developed to identify and measure the impact of influential points on the results of regression models. 
+In a regression model, the estimated coefficients or predictions might be affected in meaningful fashion by the inclusion or exclusion of a single point - such points are referred to as influential (Cook, 1977).  A suite of tools have been developed to identify and measure the impact of influential points on the results of regression models. Tools like t-SNE and MDS are also succeptible to abberant data values, much in the same way that a regression model might be succeptible to outliers and, specifically, influential points.
 
 
 
 
 ## Goal 
 
-The goal of this method is to develop a diagnostic that can be used to help identify influential points and potentially quantify how much they impact the resulting mapping, irrespective of how that mapping was created.  Additionally, this method can be used to assess the sensitivity of each method to influential points and the impact that sensititivy might have on how an end user might want to interpret the resulting map produced.  Note that while robustness to influential points might at first seem like a positive trait for an ordination method, masking distinctly different observations in a mapping may have negative consequences as well. 
+The goal of this method is to develop a diagnostic that can be used to help identify influential points and potentially quantify how much they impact the resulting mapping, and create a tool that can be used with any mapping technique.   Additionally, this method can be used to assess the sensitivity of each method to influential points and the impact that sensititivy might have on how an end user might want to interpret the resulting map produced.  Note that while robustness to influential points might at first seem like a positive trait for an ordination method, masking distinctly different observations in a mapping may have negative consequences as well. 
 
 
 This document overviews the statistical methodology we have developed to identify influential points that, when excluded from a dataset, can meaningfully impact the shape of an ordination created from data. We overview our methodology step by step. 
@@ -74,20 +74,27 @@ This document overviews the statistical methodology we have developed to identif
 
 # Methods
 
-This document assesses the effect of multivariate outliers on the maps produced by two methods: classical multidimensional scaling and t-SNE. In general, we seek to identify either **multivariate outliers** (or groups of them) or alternatively single influential points that, for some reason, cause large differences in the shape of the resulting ordination. 
+This document assesses the effect of multivariate outliers on the maps produced by two methods: classical multidimensional scaling and t-SNE. In general, we seek to identify either **multivariate outliers** (or groups of them) which, for some reason, cause large differences in the shape of the resulting ordination. The methods rely on a few different ideas.  First, PERMANOVA (Anderson, 2001) is a non-parametric, multivariate version of Analysis of Variance (ANOVA) that relies on a pseduo-F test to compare within-group and between group similarities based on a specified distance (dissimilarity) measure. Unlike ANOVA, PERMANOVA makes use of permutation tests to draw inferences without assuming distributions of test statistics. 
+
+Second, distance matrices contain information on point-to-point distances (or dissimilarities) and, when vectorized, the correlation of the distance matrices measures similarity of two configurations (Mantel's test (Mantel, 1967) makes use of this approach to assess correlation between distance matrices). 
+
+Third, correlations (or similarities) can be converted to distances; one such metric for doing this is $\sqrt{2(1-r_{ij})}$ (James et al, 2013). 
+
+Finally, correlations can be computed using pairwise complete observations to leverage all available information to estimate correlations in the presence of some missing data values. 
+
 
 Our Permanova-based approach is as follows: 
 
-1. For each observation in the dataset, remove it, and generate a t-SNE map in 2 dimensions from the resulting (n-1) observations.  (For accounting purposes, it may make sense to keep the nx1 structure but replace the holdout observation with NA). 
+1. For each observation in the dataset, remove it, and generate a map in 2 dimensions from the resulting (n-1) observations for a selected ordination method.  (For accounting purposes, it may make sense to keep the nx1 structure but replace the holdout observation with NA). 
 2. Generate a distance matrix of the nx1 by 2 matrix. Do this for each of the held-out observations. 
 3. Generate a pairwise-complete correlation matrix from the combination of these vectorized distances that measures similarity of distances (where available).
-4. Convert that correlation matrix (of all the hold-out vectorized distance matrices) into a distance matrix using a $1-|\sqrt{}\. 
+4. Convert that correlation matrix (of all the hold-out vectorized distance matrices) into a distance matrix using a $$\sqrt{2(1-r_{ij})}$$ (James et al, 2013). 
 5. Apply non-parametric PERMANOVA tests for each holdout observation - this means that on a 100-observation dataset, you apply 100 individual tests where each test uses an independent variable that is equal to 1 for the index of the holdout observation and 0 elsewhere. The hypotheses are specified as such: 
 
 + $H_0$: No differences in map with observation j removed vs. those without j removed 
 + $H_a$: Some difference in map with observation j removed
 
-We will discuss correcting p-values for multiple testing later, although currently our plan is to assess using Benjamini-Hochberg False Discovery Rate or Bonferroni corrections (or something similar). We would expect that if the maps are suitably distorted, or *influenced* by a single point, the resulting p-value for the jth adonis test would be small. 
+We will discuss correcting p-values for multiple testing later, although currently our plan is to assess using Benjamini-Hochberg False Discovery Rate or Bonferroni corrections (or something similar, assuming that the results are based on p-values as in the Bonferroni Outlier test (Cook & Weisberg, 1982)). We would expect that if the maps are suitably distorted, or *influenced* by a single point, the resulting p-value for the jth adonis test would be small. 
 
 
 
@@ -131,8 +138,9 @@ yes_structure_final$Group <- c(yes_structure$Group, rep("Outlier",1))
 
 1. For each observation in the dataset, remove it, and generate a (t-SNE or MDS) map in 2 dimensions from the resulting (n-1) observations.  (For accounting purposes, it may make sense to keep the nx1 structure but replace the holdout observation with NA). The code below shows this as it pertains to the "multipermanova" function that I have written - it makes use of a function called "insert" from R.utils that adds NAs for each index that is held out. 
 
-```{r, eval = TRUE, message = FALSE}
+```{r, eval = TRUE, message = FALSE, warning = FALSE}
 #initializes some stuff 
+perplexity = 10
 data = yes_structure_final
 n <- nrow(data)
   maplist <- list()
@@ -176,10 +184,10 @@ plot(maplist_new[[1]], pch = 20, main = "Example of maplist (t-SNE), Observation
 
 2. Generate a distance matrix of the n by 2 matrix. Do this for each of the held-out observations. 
 
-3. Vectorize the distance matrix and generate a correlation matrix from the combination of these vectorized distances.
+3. Vectorize the distance matrix and generate a correlation matrix(Pearson correlation based on pairwise-complete observations) from the combination of these vectorized distances.
 
 
-We vectorize distance matrices in the following way, where $d12$ refers to the distance between the first and second observations (in the map). I'm ignoring the upper/lower triangle symmetry in this example. As an example, here's what this looks like in a very simplistic 3 observation case. 
+We vectorize distance matrices in the following way, where $d12$ refers to the distance between the first and second observations (in the map). I'm ignoring the upper/lower triangle symmetry in this example. As an example, here's what this looks like in a very simplistic 3 observation case, when the first observation is held out. 
 
 $$\mathbf{Dist(X_{nxn})} = \left[\begin{array}
 {rrr}
@@ -189,26 +197,26 @@ NA & d_{32} & 0
 \end{array}\right]
 $$
 
-The vectorized form (shown as a row vector) would be: 
-$$\mathbf{c(Dist(X))^T} = \left[\begin{array}
+The vectorized form would be: 
+$$vec(\mathbf{c(Dist(X)))^T} = \left[\begin{array}
 {r}
 NA & NA & NA &
 NA & 0 & d_{32} &
 NA & d_{23} & 0
 \end{array}\right]
 $$
-Then, the correlation matrix as follows, where each column comes from the ith holdout map. Note that the below notation reads: $d_{23, 1}$ is the distance between observations 2 and 3 on the map that holds out the 1st observation. 
+Then, the matrix used to compare distance matrices is as follows, where each column comes from the ith holdout map. Note that the below notation reads: $d_{23, -1}$ is the distance between observations 2 and 3 on the map that holds out the 1st observation. 
 
 $$ \mathbf{Cor(Dist(X))} = \left[\begin{array}
 {rrr}
-NA & d_{12, 2} & d_{13,3} \\
-NA & NA & d_{23,3} \\
-NA & d_{31,2} & NA \\
+NA & d_{12, -2} & d_{13,-3} \\
+NA & NA & d_{23,-3} \\
+NA & d_{31,-2} & NA \\
 NA & NA & ...\\
 0 & NA & .\\
-d_{32,1} & NA & .\\
-NA & d_{13,2} & .\\
-d_{23,1} & NA & .\\
+d_{32,-1} & NA & .\\
+NA & d_{13,-2} & .\\
+d_{23,-1} & NA & .\\
 0 & 0 & .\\
 \end{array}\right]
 $$
@@ -223,9 +231,12 @@ Because of the holdout NAs, we do not have complete cases to compare so instead 
   distmat_list_cmd <- lapply(cmdlist_new, dist)
   
   
-levelplot(as.matrix(distmat_list[[1]]), main = paste0("NA Pattern for ",1, "st Holdout"))
-levelplot(as.matrix(distmat_list[[3]]), main = paste0("NA Pattern for ",3, "rd Holdout"))
-levelplot(as.matrix(distmat_list[[5]]), main = paste0("NA Pattern for ",5, "th Holdout"))
+#levelplot(as.matrix(distmat_list[[1]]), main = paste0("NA Pattern for ",1, "st Holdout"))
+#levelplot(as.matrix(distmat_list[[3]]), main = paste0("NA Pattern for ",3, "rd Holdout"))
+#levelplot(as.matrix(distmat_list[[5]]), main = paste0("NA Pattern for ",5, "th Holdout"))
+
+
+image(as.matrix(distmat_list[[3]]), main = "NA Pattern for 3rd Holdout", col = hcl.colors(4)) 
 
 ```
 
@@ -233,7 +244,7 @@ levelplot(as.matrix(distmat_list[[5]]), main = paste0("NA Pattern for ",5, "th H
 
 
 
-The code chunk below shows both steps simultaneously. Note that generating the pearson correlation matrix from the vectorized distance matrices is done using pairwise complete observations - the NAs we include from the holdout set can cause potential problems when this is not specified. 
+The code chunk below shows both steps simultaneously. 
 
 ```{r, eval = TRUE}
  #vectorizes the distances and outputs a list of vectorized distance matrices 
@@ -242,7 +253,7 @@ The code chunk below shows both steps simultaneously. Note that generating the p
   
   
   
-  ## takes the vectorized distance matrices and smashes them into a single data frame - to build correlation matrix
+  ## takes the vectorized distance matrices and binds the columns into a single data frame - to build correlation matrix
   
   dist_mat <- dist_list %>% as_tibble(.name_repair = "minimal")
   dist_mat_cmd <- dist_list_cmd %>% as_tibble(.name_repair = "minimal")
@@ -274,7 +285,7 @@ We calculate the correlation matrix from the above:
 ```
 
 
-4. Convert that correlation matrix (of all the hold-out vectorized distance matrices) into a distance matrix using the result that $D_{ij} = \sqrt{2(1-cor)}$. Note that here, we expect that all the correlation values are greater than 0 - and as shown, they are. 
+4. Convert that correlation matrix (of all the hold-out vectorized distance matrices) into a distance matrix using the result that $D_{-i,-j} = \sqrt{2(1-r_{-i,-j})}$. Note that here, we expect that all the correlation values are greater than 0 - and as shown, they are. 
 
 *Note also that with this new distance matrix, we can actually create 2D visualizations (maps) from the distance matrix, creating a "map-of-maps" to show which of the ordinations are different from the rest. (Similarly, you could cluster maps or perform any distance-based method on this matrix to explore differences in the holdout ordinations).* 
 
@@ -289,9 +300,9 @@ cormat %>% min()
 
 5. Apply non-parametric PERMANOVA tests for each holdout observation, using an indicator that is 1 for the holdout observation and 0 for all others.  Cycle the indicator for each index - so you will apply $n$ individual tests. 
 
-In the code below, the data does not change - the calls to 'adonis' change only in that the index of the "1" for the indicator variable chanegs at each iteration. Thus, the indicator for the first holdout observation is [1,0,0,...] and so on and so forth. 
+In the code below, the data do not change - the calls to 'adonis' change only in that the index of the "1" for the indicator variable chanegs at each iteration. Thus, the indicator for the first holdout observation is [1,0,0,...] and so on and so forth. 
 
-Note that for adonis, this version uses 1000 permutations rather than a permutation matrix, meaning that this version re-samples the $n+1$ different unique permutations of the indicator which has a single $1$ and $0$'s in all the other indices. *We are working on being a bit more efficient with this permutation strategy so that we do not sample more than necessary*.  
+*Note that in some cases for Adonis, it may be possible to have more permutations than possible combinations of 0's and 1's - meaning that picking a number of permuations just re-samples the $n+1$ different unique permutations of the indicator which has a single $1$ and $0$'s in all the other indices (there are only* $n+1$ *pseudo-F statistics that are unique). To be more efficient with this permutation strategy so that we do not sample more than necessary, we specify a permutation matrix rather than passing a raw number of permuations*.  
 
 
 ```{r}
@@ -332,7 +343,7 @@ for(i in 2:nrow(permat1)){
 ```
 
 
-Note that in the Adonis function, we do obtain a few negative f-statistic values in certain cases. These are the null values based on the permutations used. This seems to occur only for the MDS data - in the cases where we do see negative values, they are quite close to 0. 
+Note that in the Adonis function, we do obtain a few negative pseudo F-statistic values in certain cases. These are the null values based on the permutations used. This seems to occur only for the MDS data - in the cases where we do see negative values, they are quite close to 0. The sums of squares equivalent in PERMANOVA for the treatment is found by subtraction and the equivalent to the error sums of squares must be exceeding the total sums of squares (slightly, by a rounding error). 
 
 
 ```{r}
@@ -341,13 +352,13 @@ Note that in the Adonis function, we do obtain a few negative f-statistic values
 model_list[[1]]
 
 model_list[[1]]$f.perms %>% min()
-model_list[[1]]$f.perms %>% hist(main = "Example of Permutation Distribution: t-SNE")
-
+model_list[[1]]$f.perms %>% as.data.frame() %>% ggplot(aes(V1)) + geom_histogram(bins = 20) + ggtitle("Ex: Permutation Distribution: tSNE, bins = 20")
 
 #from cmd - an example with negatives included (note that they are all the same value )
+model_list_cmd[[1]]
 model_list_cmd[[1]]$f.perms %>% min()
 model_list_cmd[[1]]$f.perms[which(model_list_cmd[[1]]$f.perms<0)]
-model_list_cmd[[1]]$f.perms %>% hist(main = "Example of Permutation Distribution: MDS")
+model_list_cmd[[1]]$f.perms %>% as.data.frame() %>% ggplot(aes(V1)) + geom_histogram(bins = 20) + ggtitle("Ex: Permutation Distribution: MDS, bins = 20")
 
 
 ```

@@ -1,6 +1,27 @@
 ## Draft version of outlier comparison function agnostic to mapping technique
 
 
+# preliminary functions: 
+
+## Vectorize Dist: Function that takes a dataframe and returns a vectorized version of a distance matrix applied to that data matrix. 
+## This function is used for generating vectorized data when we step through the Mantel test. 
+
+vectorize_dist <- function(df) {
+  tmp <- dist(df)
+  vec <- c(tmp)
+  return(vec)}
+
+## Pull P-Val and Pull F stat return the p-values and f-statstics from the list of output MultiPermanova puts out. 
+
+pullPval <- function(x){temp <- x$aov.tab$`Pr(>F`[1]; return(temp)}
+
+pullFstat <- function(x){temp <- x$aov.tab$`F.Model`[1]; return(temp)}
+
+
+
+
+
+
 #generate maps on holdout data (jth iteration is held out)
 # this function should be able to operate on multiple mapping techniques or a single one 
 
@@ -119,15 +140,15 @@ MultiPermanova <- function(data, nperms = 5000, perplexity = 10, pca_options = F
 
 
 #quick testing
-tic = Sys.time()
-x3 = MultiPermanova(yes_structure_final[,1:10], maptype = "MDS")
-toc = Sys.time()
-
-tic - toc
-
-tic = Sys.time()
-x4 = MultiPermanova(yes_structure_final[,1:10], maptype = "tSNE", perplexity = 20)
-toc = Sys.time()
+# tic = Sys.time()
+# x3 = MultiPermanova(yes_structure_final[,1:10], maptype = "MDS")
+# toc = Sys.time()
+# 
+# tic - toc
+# 
+# tic = Sys.time()
+# x4 = MultiPermanova(yes_structure_final[,1:10], maptype = "tSNE", perplexity = 20)
+# toc = Sys.time()
 
 #both functions take about 2.5 minutes
 
