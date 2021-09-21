@@ -35,7 +35,7 @@ library(mnormt)
 
 # Introduction
 
-Consider the problem of visualizing multivariate (or potentially high-dimensional) data.  In many cases, it is necessary to generate a 2 or 3-D mapping of some higher-dimensional space, projecting the high-dimensional data into an ordination that can be printed on paper. There are many methods that exist to accomplish this task, ranging from tools such as classicial multidimensional scaling (MDS) to more modern tools like t-distributed Stochastic Neighbor Embedding. 
+Consider the problem of visualizing multivariate (or potentially high-dimensional) data.  In many cases, it is useful to generate a 2 or 3-D mapping of some higher-dimensional space, projecting the high-dimensional data into an ordination that can be directly visualized. There are many methods that exist to accomplish this task, ranging from tools such as classicial multidimensional scaling (MDS) to more modern tools like t-distributed Stochastic Neighbor Embedding. 
 
 Unlike regression or classification, most tools for dimension reduction and higher-dimensional data visualization are unsupervised, meaning that they do not take advantage of some marked response variable; rather, they capitalize on the signal present in a set of features and produce a data-driven result.  
 
@@ -47,7 +47,7 @@ The goal of this method is to develop a diagnostic that can be used to help iden
 This document overviews the statistical methodology we have developed to identify influential points that, when excluded from a dataset, can meaningfully impact the shape of an ordination created from data. We overview our methodology step by step.
 
 
-# High-dimensional Data Visualization Tools
+# Tools for High-Dimensional Data Visualization
 
 ## t-SNE
 
@@ -72,11 +72,27 @@ Depending on the size of the initial dimensionality of the data, this step may d
 
 ## Multidimensional Scaling
 
-Classical multidimensional scaling (MDS) is closely related to PCA (an in some cases, equivalent) (Gower, 1966).  MDS takes as input a distance or dissimilarity matrix representing the distance between pairs of observations - this distance need not simply be Euclidean. Classical multidimensional scaling returns maps in teh same metric as the original distance or dissimilarity matrix. 
+Classical multidimensional scaling (MDS) is closely related to PCA (an in some cases, equivalent) (Gower, 1966).  MDS takes as input a distance or dissimilarity matrix representing the distance between pairs of observations. This distance does not have to simply be Euclidean (although it often is). Classical multidimensional scaling returns maps in the same metric as the original distance or dissimilarity matrix; in general, the more dissimilar two observations are in the high-dimensional space, the farther apart they should be in the resulting MDS ordination.
 
-## Sparse t-SNE
+Multidimensional scaling attempts to minimize a metric called "stress" which can be defined generally as:
+$$ S_M(z_1, z_2, ..., z_N) = \sum_{i \neq i'}(d_{i,i'} - \|z_i - z_{i'}\|)^2 $$ 
+Different versions the stress function exist for different variations of MDS, including methods like Sammon mapping and Classical MDS, which frames the problem from a similarity perspective: 
 
-## Cross Validation and Mantel-esque Test
+$$ S_c(z_1, z_2, ..., z_N) = \sum_{i, i'} (s_{i,i'} - (z_i - \bar{z}_,z_{i'} - \bar{z}))^2$$ 
+Classical MDS can be expressed equivalently as Principal Component Analysis when distances are Euclidean (Elements, XXXX). 
+
+
+
+
+
+## Additional Mapping Techniques 
+
+Placeholder section in case we want to add another mapping technique in. 
+
++ SNE
++ Sammon Mapping
++ Isomap
+
 
 # Defining “Influence” in High Dimensional Maps
 
@@ -153,7 +169,7 @@ We will discuss correcting p-values for multiple testing later, although current
 
 
 
-# Simulation
+# Simulation Studies
 
 We conducted a series of simulations to assess the efficacy of the method at identifying influential points in various different situations. In all cases, we simulated data from multivariate normal distributions.  Additionally, we did not use any of the data pre-processing available in any t-SNE maps; no PCA was used to pick an initial set of dimensions to reduce. 
 
@@ -199,7 +215,7 @@ The Carnegie Classification is typically based on a scaled version of the data d
 For this analysis, we instead look at scaled versions of the unranked data in part to assess whether or not some of the relative extreme points appear as influential relative to other universities in the group. 
 
 
-```{r}
+```{r, eval = FALSE}
 CC2015 <- read.csv("https://raw.githubusercontent.com/paulharmongj/Carnegie_SEM/master/data/CC2015data.csv")
 
 CC2015_filter <- CC2015 %>% filter(BASIC2015 %in% c(15,16,17)) %>% select(PDNFRSTAFF, S.ER.D, NONS.ER.D, FACNUM, HUM_RSD, STEM_RSD, OTHER_RSD, SOCSC_RSD)
@@ -217,7 +233,16 @@ out <- MultiPermanova(CCscale, maptype = "MDS")
 
 # Discussion
 
-t-SNE is not particularly sensitive to single points that are highly dissimilar to others in the dataset. It is often not obvious that such observations are present when viewing a t-SNE map. In the case of other methods, like MDS, influential points change the configuration of the ordination significantly.  
+The proposed method uses a similar framework as to the tools available in regression in order to identify potentially abberant data points that can impact the shape of maps.  Critically, the choice of ordination technique can impact the efficacy and sensitivity of maps to outliers/influential points.  Some methods, like MDS, are highly responsive to influential points that do not look like the rest of the data. Maps resulting from these methods will typically make such points obvious. 
+
+Alternatively, t-SNE is not particularly sensitive to single points that are highly dissimilar to others in the dataset. It is often not obvious that such observations are present when viewing a t-SNE map. In many cases, the influential data points are pushed towards the center of the resulting ordination, making them difficult to identify. 
+
+Depending on the use case and problem to be solved, this sensitivity (or lack therof) may be benificial or potentially problematic. In some instances, it may be necessary to create maps that are relatively stable even in the presence of influential points; the results in this paper suggest that t-SNE might be more effective for creating maps in those situations.  However, care should be taken when interpreting results from such maps as there may be substantively different observations that get grouped together in the resulting ordination. 
+
+Much like in regression, we recommend taking an iterative approach to dealing with influential points.  It is common practice in regression diagnostics to identify the point with the highest Cook's distance, remove it, and re-fit the model to see the new dispersion of observations' impacts on the model.  A similar approach might be useful when creating high-dimensional data maps using these techniques. 
+
+We recommend identifying the observation with the largest pseudo-F statistic, removing it, and re-assessing the PERMANOVA results with the reduced set.  By cleaning out some of the most influential points, the resulting maps should be more reproducible, of higher fidelity, and provide potentially more meaningful results. 
+
 
 
 
