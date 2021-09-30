@@ -245,6 +245,9 @@ We recommend identifying the observation with the largest pseudo-F statistic, re
 
 
 
+## Key Questions to Answer
+
+Is there a way to look at the individual contribution of each feature to the influential points? (simulate this?)
 
 
 

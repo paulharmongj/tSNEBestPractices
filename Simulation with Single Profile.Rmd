@@ -99,6 +99,20 @@ Let's look at a couple example profiles - here we might have a feature with only
 
 ```{r}
 perplexity = 10
+
+ xTSNE <- MultiPermanova(yes_structure_final[,1:20], maptype = "tSNE")
+#  results_list[[j]] <- xTSNE
+  
+  df2 = tibble(Holdout = 1:length(xTSNE$modellist), PValues = sapply(xTSNE$modellist, pullPval), Fstat = sapply(xTSNE$modellist, pullFstat))
+  df2$Colors <- ifelse(df2$PValues < 0.05, TRUE, FALSE)
+  df2list[[j]] = df2
+```
+
+
+
+
+```{r}
+perplexity = 10
   #### Run the Permanova mapping (for t-SNE)
   
   xTSNE <- MultiPermanova(yes_structure_final[,1:20], maptype = "tSNE")
@@ -138,6 +152,3 @@ perplexity = 10
   #Visualize the f stats and store in a list
   sigplot2f <- ggplot(df3, aes(Holdout, Fstat)) + geom_point(aes(color = Colors), size = 2) + geom_line(alpha = 0.5, color = "grey") + theme_bw() + ggtitle("CMD: F Stats From Adonis")
   plot_mds_fstat_results_list[[j]] <- sigplot2f
-  
-  
-}
