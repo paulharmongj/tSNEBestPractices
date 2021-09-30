@@ -140,17 +140,17 @@ MultiPermanova <- function(data, nperms = 1000, perp_val= 10, pca_options = FALS
 
 
 #quick testing
- tic = Sys.time()
- x3 = MultiPermanova(yes_structure_final[,1:10], maptype = "MDS")
- toc = Sys.time()
-# 
- toc - tic
-# 
- tic = Sys.time()
- x4 = MultiPermanova(yes_structure_final[,1:10], maptype = "tSNE", perp_val = 20)
- toc = Sys.time()
- 
- toc - tic
+#  tic = Sys.time()
+#  x3 = MultiPermanova(yes_structure_final[,1:10], maptype = "MDS")
+#  toc = Sys.time()
+# # 
+#  toc - tic
+# # 
+#  tic = Sys.time()
+#  x4 = MultiPermanova(yes_structure_final[,1:10], maptype = "tSNE", perp_val = 20)
+#  toc = Sys.time()
+#  
+#  toc - tic
 
 #both functions take about 2.5 minutes
 
