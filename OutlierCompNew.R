@@ -25,7 +25,7 @@ pullFstat <- function(x){temp <- x$aov.tab$`F.Model`[1]; return(temp)}
 #generate maps on holdout data (jth iteration is held out)
 # this function should be able to operate on multiple mapping techniques or a single one 
 
-Generate_Holdout_Maps <- function(data, j, maptype = "MDS",...){  
+Generate_Holdout_Maps <- function(data, j, maptype = "MDS", perp_val = 10){  
   
   #hold out a single row of the data (in the jth row)
   #note - have to remove, as t-SNE doesn't like NAs
@@ -42,7 +42,7 @@ Generate_Holdout_Maps <- function(data, j, maptype = "MDS",...){
   }
   else if(maptype == "tSNE"){
     #generate the t-SNE map and store x,y in map list
-    map <- Rtsne(data_dist, perplexity = perplexity, pca = pca_options, is_distance = TRUE)$Y
+    map <- Rtsne(data_dist, perplexity = perp_val, pca = pca_options, is_distance = TRUE)$Y
   }
   else{print("No maptype selected.")}
   
@@ -55,7 +55,7 @@ Generate_Holdout_Maps <- function(data, j, maptype = "MDS",...){
 
 #mapping method supported
 
-MultiPermanova <- function(data, nperms = 5000, perplexity = 10, pca_options = FALSE, maptype = "MDS"){
+MultiPermanova <- function(data, nperms = 1000, perp_val= 10, pca_options = FALSE, maptype = "MDS"){
   
   # initialize the size of the data and output lists
   n <- nrow(data)
@@ -140,15 +140,17 @@ MultiPermanova <- function(data, nperms = 5000, perplexity = 10, pca_options = F
 
 
 #quick testing
-# tic = Sys.time()
-# x3 = MultiPermanova(yes_structure_final[,1:10], maptype = "MDS")
-# toc = Sys.time()
+ tic = Sys.time()
+ x3 = MultiPermanova(yes_structure_final[,1:10], maptype = "MDS")
+ toc = Sys.time()
 # 
-# tic - toc
+ toc - tic
 # 
-# tic = Sys.time()
-# x4 = MultiPermanova(yes_structure_final[,1:10], maptype = "tSNE", perplexity = 20)
-# toc = Sys.time()
+ tic = Sys.time()
+ x4 = MultiPermanova(yes_structure_final[,1:10], maptype = "tSNE", perp_val = 20)
+ toc = Sys.time()
+ 
+ toc - tic
 
 #both functions take about 2.5 minutes
 
